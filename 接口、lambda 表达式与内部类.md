@@ -459,6 +459,8 @@ class TimeGreeter extends Greeter{
 public class TestBase3{
 	public static void main(String[] args){
 		new TimeGreeter().greet();
+        JOptionPane.showMessageDialog(null,"停止程序?");  //显示一个包含一条消息和 OK 按钮的对话框。
+		System.exit(0);
 	}
 }
 /*
@@ -568,4 +570,303 @@ public class TestBase3{
 4. 如果设计你自己的接口， 其中只有一个抽象方法， 可以用 @FunctionalInterface 注解来标记这个接口。 这样做有两个优点。 如果你无意中增加了另一个非抽象方法， 编译器会产生一个错误消息。 另外 javadoc 页里会指出你的接口是一个函数式接口。这样做有两个优点。 如果你无意中增加了另一个非抽象方法， 编译器会产生一个错误消息。 另外 javadoc 页里会指出你的接口是一个函数式接口。并不是必须使用注解根据定义， 任何有一个抽象方法的接口都是函数式接口。 不过使用 @FunctionalInterface 注解确实是一个很好的做法。
 
 ## 4  内部类
+
+内部类（ inner class) 是定义在另一个类中的类。使用内部类的主要原因有以下三点：
+
+- 内部类方法可以访问该类定义所在的作用域中的数据， 包括私有的数据。
+- 内部类可以对同一个包中的其他类隐藏起来。
+- 当想要定义一个回调函数且不想编写大量代码时，使用匿名 （anonymous) 内部类比较便捷。
+
+### 4.1  使用内部类访问对象状态
+
+1. 内部类的对象有一个隐式引用， 它引用了实例化该内部对象的外围类对象。通过这个指针， 可以访问外围类对象的全部状态。
+2. 从传统意义上讲，一个方法可以引用调用这个方法的对象数据域。内部类既可以访问自身的数据域， 也可以访问创建它的外围类对象的数据域.
+3. 只有内部类可以是私有类，而常规类只可以具有包可见性，或公有可见性。
+
+```java
+import java.util.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.Timer;
+
+class TalkingClock{
+	private int interval;
+	private boolean beep;
+
+	public TalkingClock(int interval,boolean beep){
+		this.interval=interval;
+		this.beep=beep;
+	}
+	public void start(){
+        //TimePrinter 对象是由 TalkingClock 类的方法构造。
+		ActionListener listener=new TimePrinter();
+		Timer t=new Timer(interval,listener);
+		t.start();
+	}
+    //当在 start 方法中创建了 TimePrinter 对象后， 编译器就会将 this 引用传递给当前的语音时钟的构造器：
+	public class TimePrinter implements ActionListener{
+        //因为 TimePrinter 类没有定义构造器， 所以编译器为这个类生成了一个默认的构造器，。
+        /*
+        public TimePrinter(TalkingGock clock) // automatically generated code
+        {
+        	outer = clock;
+        }	
+        */
+		public void actionPerformed(ActionEvent event){
+			System.out.println("the nowtime is "+new Date());
+			if (beep) {
+                //actionPerformed 方法在发出铃声之前检查了 beep 标志
+                // TimePrinter 类没有实例域或者名为 beep 的变量，取而代之的是beep 引用了创建 TimePrinter 的 TalkingClock 对象的域。
+				Toolkit.getDefaultToolkit().beep();
+			}
+		}
+	}
+}
+
+public class TestBase3{
+	public static void main(String[] args){
+		TalkingClock clock=new TalkingClock(1000,true);
+		clock.start();
+		JOptionPane.showMessageDialog(null,"停止程序?");  //显示一个包含一条消息和 OK 按钮的对话框。
+		System.exit(0);
+	}
+}
+```
+
+### 4.2  内部类的特殊语法规则
+
+1. 事实上，使用外围类引用的正规语法还要复杂一些。表达式OwterC/ass.this表示外围类引用。 
+
+2. 反过来，可以采用下列语法格式更加明确地编写内部对象的构造器：outerObject.new InnerClass{construction parameters)
+
+   ```java
+   		if (beep) {  //TalkingClock.this.beep
+   				Toolkit.getDefaultToolkit().beep();
+   			}
+   		ActionListener listener=new TimePrinter();  //this.new TimePrinter()
+   ```
+
+3.  在外围类的作用域之外，可以这样引用内部类：OuterClass.InnerClass
+
+4. 内部类中声明的所有静态域都必须是 final。原因很简单。 我们希望一个静态域只有一个实例， 不过对于每个外部对象， 会分别有一个单独的内部类实例。如果这个域不是 final, 它可能就不是唯一的。
+
+5. 内部类不能有 static 方法。Java 语言规范对这个限制没有做任何解释。也可以允许有静态方法， 但只能访问外围类的静态域和方法。
+
+### 4.3  内部类是否有用、必要和安全
+
+1. 内部类的语法很复杂。它与访问控制和安全性等其他的语言特性的没有明显的关联。
+2. 内部类是一种编译器现象， 与虚拟机无关。编译器将会把内部类翻译成用 $ (美元符号）分隔外部类名与内部类名的常规类文件， 而虚拟机则对此一无所知。
+3. 由于内部类拥有访问特权， 所以与常规类比较起来功能更加强大。
+4. 如果内部类访问了私有数据域， 就有可能通过附加在外围类所在包中的其他类访问它们， 但做这些事情需要高超的技巧和极大的决心。程序员不可能无意之中就获得对类的访问权限， 而必须刻意地构建或修改类文件才有可能达到这个目的。
+
+### 4.4  局部内部类
+
+```java
+	public void start(){
+		//局部内部类
+		class TimePrinter implements ActionListener{
+			public void actionPerformed(ActionEvent event){
+				System.out.println("the nowtime is "+new Date());
+				if (beep) {  //TalkingClock.this.beep
+					Toolkit.getDefaultToolkit().beep();
+				}
+			}
+		}
+		ActionListener listener=new TimePrinter();  //this.new TimePrinter()
+		Timer t=new Timer(interval,listener);
+		t.start();
+	}
+```
+
+1. 局部类不能用 public 或 private 访问说明符进行声明。它的作用域被限定在声明这个局部类的块中。
+2. 局部类有一个优势， 即对外部世界可以完全地隐藏起来。 即使 TalkingClock 类中的其他代码也不能访问它。除 start 方法之外， 没有任何方法知道 TimePrinter 类的存在。
+3. 局部类还有一个优点。它们不仅能够访问包含它们的外部类， 还可以访问局部变量。不过， 那些局部变量必须事实上为 final。这说明， 它们一旦赋值就绝不会改变。
+
+### 4.5  由外部方法访问变量
+
+```java
+class TalkingClock{
+	public void start(int interval,boolean beep){
+		//局部内部类
+		class TimePrinter implements ActionListener{
+			public void actionPerformed(ActionEvent event){
+				System.out.println("the nowtime is "+new Date());
+				if (beep) {  //TalkingClock.this.beep
+					Toolkit.getDefaultToolkit().beep();
+				}
+			}
+		}
+		ActionListener listener=new TimePrinter();  //this.new TimePrinter()
+		Timer t=new Timer(interval,listener);
+		t.start();
+	}
+}
+
+public class TestBase3{
+	public static void main(String[] args){
+		TalkingClock clock=new TalkingClock();
+		clock.start(1000,true);
+		JOptionPane.showMessageDialog(null,"停止程序?");  //显示一个包含一条消息和 OK 按钮的对话框。
+		System.exit(0);
+
+	
+	}
+}
+```
+
+TalkingClock 类不再需要存储实例变量 beep 了，它只是引用 start 方法中的 beep参数变量。
+
+1 ) 调用 start 方法。
+2 ) 调用内部类 TimePrinter 的构造器， 以便初始化对象变量 listener。
+3 ) 将 listener 引用传递给 Timer 构造器， 定时器开始计时， start 方法结束。此时，start方法的 beep 参数变量不复存在。
+4 ) 然后，actionPerformed 方法执行 if (beep)...。
+
+```java
+		int counter = new int[l];
+
+		for (int i = 0; i < dates.length; i ++)
+			dates[i] = new Date(){
+                public int compareTo(Date other){
+                    counter[0]++;
+                    return super.compareTo(other);
+                }
+			};
+		}
+```
+
+### 4.6  匿名内部类
+
+```java
+public void start(int interval,boolean beep){
+		//匿名内部类
+		ActionListener listener=new ActionListener(){
+            //创建一个实现 ActionListener 接口的类的新对象，需要实现的方法 actionPerformed 定 义 在 括 号 内。
+			public void actionPerformed(ActionEvent event){
+				System.out.println("the nowtime is "+new Date());
+				if (beep) {  //TalkingClock.this.beep
+					Toolkit.getDefaultToolkit().beep();
+				}
+			}
+		};
+		Timer t=new Timer(interval,listener);
+		t.start();
+	}
+```
+
+1. 假如只创建这个类的一个对象，就不必命名了。这种类被称为匿名内部类（anonymous inner class)。
+
+2. 通常的语法格式为：
+
+   ```java
+   new SuperType(construction parameters){
+   	inner class methods and data
+   }
+   ```
+
+   其中， SuperType 可以是 ActionListener 这样的接口， 于是内部类就要实现这个接口。SuperType 也可以是一个类，于是内部类就要扩展它。
+
+3. 由于构造器的名字必须与类名相同， 而匿名类没有类名， 所以， 匿名类不能有构造器。取而代之的是，将构造器参数传递给超类 （superclass) 构造器。
+
+4. 尤其是在内部类实现接口的时候， 不能有任何构造参数。不仅如此，还要像下面这样提供一组括号：
+
+   ```java
+   new InterfaceType(){
+   	methods and data
+   }
+   ```
+
+5. Java 程序员习惯的做法是用匿名内部类实现事件监听器和其他回调。 如今最好还是使用 lambda 表达式。
+
+   ```java
+   	public void start(int interval,boolean beep){
+   		
+   		Timer t=new Timer(interval,event->{
+   			System.out.println("the nowtime is "+new Date());
+   			if (beep) {
+   					Toolkit.getDefaultToolkit().beep();
+   				}
+   		});
+   		t.start();
+   	}
+   ```
+
+6. 双括号初始化” （double brace initialization), 这里利用了内部类语法。
+
+   ```java
+   invite(new ArrayList<String>(){{ add("Harry"); add("Tony"); }});
+   ```
+
+   注意这里的双括号。 外层括号建立了 ArrayList 的一个匿名子类。 内层括号则是一个对象构造块。
+
+7. 生成曰志或调试消息时， 通常希望包含当前类的类名， 如：
+
+```java
+Systen.err.println("Something awful happened in " + getClass())；
+    //不过， 这对于静态方法不奏效。毕竟， 调用 getClass 时调用的是 this.getClass(),而静态方法没有 this。所以应该使用以下表达式：
+ new Object0{}.getCIass0-getEndosingClass0 // gets class of static method
+    //在这里，newObject(){} 会建立 Object 的一个匿名子类的一个匿名对象，getEnclosingClass则得到其外围类， 也就是包含这个静态方法的类。
+```
+
+### 4.7  静态内部类
+
+1. 有时候， 使用内部类只是为了把一个类隐藏在另外一个类的内部，并不需要内部类引用外围类对象。为此，可以将内部类声明为 static, 以便取消产生的引用。
+2. 只有内部类可以声明为 static。静态内部类的对象除了没有对生成它的外围类对象的引用特权外， 与其他所冇内部类完全一样。
+3. 在内部类不需要访问外围类对象的时候， 应该使用静态内部类。 有些程序员用嵌套类 （nested class ) 表示静态内部类。
+4. 与常规内部类不同， 静态内部类可以有静态域和方法。
+5. 声明在接口中的内部类自动成为 static 和 public 类。
+
+```java
+import java.util.*;
+class ArrayAlg{
+	public static class Pair{
+		private double first;
+		private double second;
+
+		public Pair(double f,double s){
+			first=f;
+			second=s;
+		}
+
+		public double getFirst(){
+			return first;
+		}
+		public double getSecond(){
+			return second;
+		}
+	}
+	public static Pair minmax(double[] values){
+		double min=Double.POSITIVE_INFINITY;
+		double max=Double.NEGATIVE_INFINITY;
+		for (double v:values) {
+			if (min>v) {
+				min=v;
+			}
+			if (max<v) {
+				max=v;
+			}
+		}
+		return new Pair(min,max);
+
+	}
+}
+
+public class TestBase3{
+	public static void main(String[] args){
+		double[] d=new double[5];
+		for (int i=0; i<d.length; i++) {
+			d[i]=100*Math.random();
+		}
+
+		System.out.println(Arrays.toString(d));
+		//[7.803257533515728, 97.0222694732156, 18.359083423368983, 62.2407079145171, 36.27014599745496]最小值：7.803257533515728
+		ArrayAlg.Pair p=ArrayAlg.minmax(d);
+		System.out.println("最小值："+p.getFirst());  //最小值：7.803257533515728
+		System.out.println("最大值："+p.getSecond());  //最大值：97.0222694732156
+
+	}
+}
+```
+
+## 5  代理
 
