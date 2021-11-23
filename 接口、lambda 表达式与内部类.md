@@ -860,7 +860,7 @@ public class TestBase3{
 
 		System.out.println(Arrays.toString(d));
 		//[7.803257533515728, 97.0222694732156, 18.359083423368983, 62.2407079145171, 36.27014599745496]最小值：7.803257533515728
-		ArrayAlg.Pair p=ArrayAlg.minmax(d);
+		ArrayAlg.Pair p=ArrayAlg.minmax(d);  // 与前面例子中所使用的内部类不同， 在 Pair 对象中不需要引用任何其他的对象
 		System.out.println("最小值："+p.getFirst());  //最小值：7.803257533515728
 		System.out.println("最大值："+p.getSecond());  //最大值：97.0222694732156
 
@@ -869,4 +869,136 @@ public class TestBase3{
 ```
 
 ## 5  代理
+
+### 5.1  何时使用代理
+
+1. 代理类可以在运行时创建全新的类。这样的代理类能够实现指定的接口。尤其是，它具有下列方法：
+
+   - 指定接口所需要的全部方法。
+
+   - Object 类中的全部方法， 例如， toString、 equals 等。
+
+     然而，不能在运行时定义这些方法的新代码。而是要提供一个调用处理器（ invocationhandler)。调用处理器是实现了 InvocationHandler 接口的类对象。在这个接口中只有一个方法：
+
+     ```java
+     Object invoke(Object proxy, Method method, Object [] args)
+     ```
+
+2. 无论何时调用代理对象的方法， 调用处理器的 invoke 方法都会被调用， 并向其传递Method 对象和原始的调用参数。 调用处理器必须给出处理调用的方式。
+
+### 5.2  创建代理对象
+
+1. 要想创建一个代理对象， 需要使用 Proxy 类的 newProxylnstance 方法。 这个方法有三个参数：
+
+   - 一个类加栽器（class loader)。作为 Java 安全模型的一部分， 对于系统类和从因特网上下载下来的类，可以使用不同的类加载器。目前，用 null 表示使用默认的类加载器。
+   - 一个 Class 对象数组， 每个元素都是需要实现的接口。
+   - 一个调用处理器。
+
+2. 使用代理可能出于很多原因， 例如：
+
+   - 路由对远程服务器的方法调用。
+   - 在程序运行期间，将用户接口事件与动作关联起来。
+   - 为调试， 跟踪方法调用。
+
+   使用代理对象对二分查找进行跟踪：
+
+```java
+import java.util.*;
+import java.lang.reflect.*;
+
+//调用器类
+class TraceHandler implements InvocationHandler{
+	private Object target;
+
+	public TraceHandler(Object t){
+		target=t;
+	}
+	public Object invoke(Object proxy,Method m,Object[] args) throws Throwable{
+		//打印出方法名和参数
+		System.out.print(target);
+		System.out.print("."+m.getName()+"(");
+		if (args!=null) {
+			for (int i=0; i<args.length; i++){
+				System.out.print(args[i]);
+				if (i<args.length-1) {
+					System.out.print(", ");
+				}
+			}
+		}
+        //// invoke actual method
+		System.out.println(")");
+		return m.invoke(target,args);
+	}
+}
+
+public class TestBase3{
+	public static void main(String[] args){
+		Object[] elements=new Object[1000];
+		for (int i=0; i<elements.length; i++) {
+			//代理填充数组
+			Integer value=i+1;
+			InvocationHandler handler = new TraceHandler(value);
+			Object proxy=Proxy.newProxyInstance(null,new Class[]{Comparable.class},handler);
+			//由于数组中填充了代理对象， 所以 compareTo 调用了 TraceHander 类中的 invoke 方法。
+			elements[i]=proxy;
+		}
+		//构建一个随机整数
+		Integer key=new Random().nextInt(elements.length)+1;
+		//搜索key
+		int result=Arrays.binarySearch(elements,key);
+		//输出结果
+		if (result>0) {
+			System.out.println("key="+key+",result="+elements[result]);
+		}
+
+	}
+}
+/*
+Compiling TestBase3.java......
+------Output------
+500.compareTo(971)
+750.compareTo(971)
+875.compareTo(971)
+938.compareTo(971)
+969.compareTo(971)
+985.compareTo(971)
+977.compareTo(971)
+973.compareTo(971)
+971.compareTo(971)
+971.toString()
+key=971,result=971
+*/
+```
+
+### 5.3  代理类的特性
+
+1. 代理类是在程序运行过程中创建的。 然而， 一旦被创建， 就变成了常规类， 与虚拟机中的任何其他类没有什么区别。
+
+2. 所有的代理类都扩展于 Proxy 类。一个代理类只有一个实例域—调用处理器，它定义在 Proxy 的超类中。 为了履行代理对象的职责， 所需要的任何附加数据都必须存储在调用处理器中。
+
+3. 所有的代理类都覆盖了 Object 类中的方法 toString、 equals 和 hashCode。 如同所有的代理方法一样， 这些方法仅仅调用了调用处理器的 invoke。Object 类中的其他方法（如 clone和 getClass) 没有被重新定义。
+
+4. 没有定义代理类的名字，Sun 虚拟机中的 Proxy 类将生成一个以字符串 $Proxy 开头的类名。
+
+5. 对于特定的类加载器和预设的一组接口来说， 只能有一个代理类。 也就是说， 如果使用同一个类加载器和接口数组调用两次 newProxylustance 方法的话， 那么只能够得到同一个类的两个对象，也可以利用 getProxyClass 方法获得这个类：
+
+   ```java
+   Class proxyClass = Proxy.getProxyClass(null, interfaces);
+   ```
+
+6. 代理类一定是 public 和 final。 如果代理类实现的所有接口都是 public， 代理类就不属于某个特定的包；否则， 所有非公有的接口都必须属于同一个包，同时，代理类也属于这个包。
+
+7. 可以通过调用 Proxy 类中的 isProxyClass 方法检测一个特定的 Class 对象是否代表一个代理类。
+
+```java
+java.Iang.reflect.InvocationHandler 1.3
+	• Object invoke(Object proxy,Method method ,object[] args)  定义了代理对象调用方法时希望执行的动作。
+ java.Iang.reflect.Proxy 1.3
+    • static Class<?>   getProxyClass(Cl assLoader loader, Class<?>...    interfaces)
+    返回实现指定接口的代理类。
+    • static    Object    newProxyInstance(ClassLoader    loader, Class<?>[]    interfaces, InvocationHandler handler)
+    构造实现指定接口的代理类的一个新实例。    所有方法会调用给定处理器对象的 invoke 方法。
+    • static boolean isProxyClass(Class<?> cl)
+    如果 cl 是一个代理类则返回 true。
+```
 
