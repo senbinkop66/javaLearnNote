@@ -470,3 +470,460 @@ public class TestApplet3{
 
 ## 4  选择组件
 
+### 4.1  复选框
+
+1. 如果想要接收的输人只是“ 是” 或“ 非”， 就可以使用复选框组件。复选框自动地带有标识标签。用户通过点击某个复选框来选择相应的选项， 再点击则取消选取。 当复选框获得焦点时， 用户也可以通过按空格键来切换选择。
+
+2. 复选框需要一个紧邻它的标签来说明其用途。 在构造器中指定标签文本。
+
+   ```java
+   bold = new ]CheckBox("Bold");
+   bold,setSelected(true);
+   ActionListener listener = . . .
+   bold.addActionListenerflistener);
+   italic.addActionListener(listener);
+   
+   ActionListener listener = event -> {
+       int mode = 0;
+       if (bold.isSelectedO) mode += Font.BOLD;
+       if (italic.isSelectedO) mode += Font.ITALIC;
+       label.setFont(new Font(Font.SERIF, mode, FONTSIZE));
+   }；
+   ```
+
+3. 可以使用 setSelected 方法来选定或取消选定复选框。isSelected 方法将返回每个复选框的当前状态。 如果没有选取则为 false, 否则为 true。
+
+4. 当用户点击复选框时将触发一个动作事件。通常， 可以为复选框设置一个动作监听器。在下面程序中， 两个复选框使用了同一个动作监听器。
+
+5. actionPerformed 方法查询 bold 和 italic 两个复选框的状态，并且把面板中的字体设置为常规、 加粗、 倾斜或者粗斜体。
+
+   ```java
+   class CheckBoxFrame extends JFrame{
+   	private JLabel label;
+   	private JCheckBox bold;
+   	private JCheckBox italic;
+   	private static final int FONTSIZE=24;
+   
+   	public CheckBoxFrame(){
+   		label=new JLabel("You will never walk alone!");
+   		label.setFont(new Font("Serif",Font.BOLD,FONTSIZE));
+   		add(label,BorderLayout.CENTER);
+   
+   		ActionListener listener=event->{
+   			int mode=0;
+   			if (bold.isSelected()) mode+=Font.BOLD;
+   			if (italic.isSelected()) mode+=Font.ITALIC;
+   			label.setFont(new Font("Serif",mode,FONTSIZE));
+   		};
+   
+   		JPanel buttonPanel=new JPanel();
+   
+   		bold=new JCheckBox("Bold");  //构造一个复选框， 初始没有被选择。
+   		bold.addActionListener(listener);
+   		bold.setSelected(true);  //获取或设置复选框的选择状态。
+   		buttonPanel.add(bold);
+   		italic=new JCheckBox("Italic");
+   		italic.addActionListener(listener);
+   		buttonPanel.add(italic);
+   
+   		add(buttonPanel,BorderLayout.SOUTH);
+   		pack();
+   	}
+   }
+   
+   public class TestApplet3{
+   	public static void main(String[] args) {
+   		EventQueue.invokeLater(()->{
+   			JFrame frame=new CheckBoxFrame();
+   			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+   			frame.setTitle("复选框");  //设置框架标题
+   			frame.setLocation(300,300);
+   			frame.setVisible(true);  //使其可见性
+   		});
+   	}
+   }
+   
+   ```
+
+### 4.2  单选钮
+
+1. 需要用户只选择几个选项当中的一个。当用户选择另一项的时候， 前一项就自动地取消选择。这样一组选框通常称为单选钮组（Radio Button Group),
+
+2. 在 Swing 中，实现单选钮组非常简单。为单选钮组构造一个 ButtonGroup 的对象。然后，再将 JRadioButton 类型的对象添加到按钮组中。按钮组负责在新按钮被按下时，取消前一个被按下的按钮的选择状态。
+
+   ```java
+   ButtonGroup group = new ButtonGroupO;
+   JRadioButton smallButton = new ]RadioButton("Small", false);
+   group.add(smallButton);
+   JRadioButton mediumButton = new ]RadioButton("Medium", true);
+   group,add(mediumButton);
+   
+   ActionListener listener = event ->
+   	label.setFont(new FontC'Serif", Font.PLAIN, size));
+   ```
+
+   构造器的第二个参数为 true 表明这个按钮初始状态是被选择，其他按钮构造器的这个参数为 false。注意， 按钮组仅仅控制按钮的行为， 如果想把这些按钮组织在一起布局， 需要把它们添加到容器中， 如 JPanel。
+
+3. 单选钮的事件通知机制与其他按钮一样。当用户点击一个单选钮时， 这个按钮将产生一个动作事件。
+
+4. 每个单选钮都对应一个不同的监听器对象。 每个监听器都非常清楚所要做的事情—把字体尺寸设置为一个特定值。在复选框示例中， 使用的是一种不同的方法， 两个复选框共享一个动作监听器。这个监听器调用一个方法来检查两个复选框的当前状态。
+
+5. 只有在通过 setActionCommand 命令明确地为所有单选钮设定动作命令后， 才能够通过调用方法 buttonGroup.getSelection().getActionCommand() 获得当前选择的按钮的动作命令。
+
+```java
+class RadioButtonFrame extends JFrame{
+	private JLabel label;
+	private JPanel buttonPanel;
+	private ButtonGroup group;
+	private JCheckBox italic;
+	private static final int FONTSIZE=24;
+
+	public RadioButtonFrame(){
+		label=new JLabel("You will never walk alone!");
+		label.setFont(new Font("Serif",Font.PLAIN,FONTSIZE));
+		add(label,BorderLayout.CENTER);
+
+		buttonPanel=new JPanel();
+		group=new ButtonGroup();
+
+		addRadioButton("Small",8);
+		addRadioButton("Medium",12);
+		addRadioButton("Large",18);
+		addRadioButton("Extra large",36);
+
+		add(buttonPanel,BorderLayout.SOUTH);
+		pack();
+
+		
+	}
+	public void addRadioButton(String name,int size){
+		boolean isSelected=size==FONTSIZE;
+		JRadioButton button=new JRadioButton(name,isSelected);  //用给定的标签和初始状态构造一个单选钮。
+		group.add(button);  //将按钮添加到组中。
+		buttonPanel.add(button);
+
+		ActionListener listener=event->label.setFont(new Font("Serif",Font.PLAIN,size));
+		button.addActionListener(listener);
+	}
+}
+
+public class TestApplet3{
+	public static void main(String[] args) {
+		EventQueue.invokeLater(()->{
+			JFrame frame=new RadioButtonFrame();
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setTitle("单选按钮");  //设置框架标题
+			frame.setLocation(300,300);
+			frame.setVisible(true);  //使其可见性
+		});
+	}
+}
+
+```
+
+### 4.3  边框
+
+1. 如果在一个窗口中有多组单选按钮， 就需要用可视化的形式指明哪些按钮属于同一组。 Swing 提供了一组很有用的边框（ borders) 来解决这个问题。可以在任何继承了 JComponent 的组件上应用边框。 最常用的用途是在一个面板周围放置一个边框， 然后用其他用户界面元 素 （如单选钮）填充面板。
+2. 有几种不同的边框可供选择，但是使用它们的步骤完全一样。
+   - 调用 BorderFactory 的静态方法创建边框。凹斜面 、凸斜面 、蚀刻 、直 线 、蒙版 、空（只是在组件外围创建一些空白空间）
+   - 可以给边框添加标题， 具体的实现方法是将边框传递给BroderFactory.createTitledBorder。
+   - 如果确实想把一切凸显出来， 可以调用下列方法将几种边框组合起来使用：BorderFactory.createCompoundBorder。
+   - 调用 JComponent 类中 setBorder 方法将结果边框添加到组件中。
+3. 不同的边框有不同的用于设置边框的宽度和颜色的选项。
+
+```java
+class BorderFrame extends JFrame{
+	private JPanel demoPanel;
+	private JPanel buttonPanel;
+	private ButtonGroup group;
+
+	public BorderFrame(){
+		demoPanel=new JPanel();
+		buttonPanel=new JPanel();
+		group=new ButtonGroup();
+		//创建一个具有凹面或凸面效果的边框。
+		addRadioButton("Lowered bevel",BorderFactory.createLoweredBevelBorder());
+		addRadioButton("Raised bevel",BorderFactory.createRaisedBevelBorder());
+		addRadioButton("Etched",BorderFactory.createEtchedBorder());
+		//创建一个简单的直线边框。
+		addRadioButton("Line",BorderFactory.createLineBorder(Color.BLUE));
+		//创建一个用 color 颜色或一个重复 （repeating ) 图标填充的粗的边框。
+		addRadioButton("Matte",BorderFactory.createMatteBorder(10,10,10,10,Color.RED));
+		//创建一个空边框。
+		addRadioButton("Empty",BorderFactory.createEmptyBorder());
+		//创建一个具有 3D 效果的直线边框。
+		Border etched=BorderFactory.createEtchedBorder(Color.GREEN,Color.BLUE);
+		//创建一个具有给定特性的带标题的边框。
+		Border titled=BorderFactory.createTitledBorder(etched,"Border types");
+		buttonPanel.setBorder(titled);
+
+		setLayout(new GridLayout(2,1));
+		add(buttonPanel);
+		add(demoPanel);
+		pack();
+	}
+	public void addRadioButton(String name,Border b){
+		JRadioButton button=new JRadioButton(name);  //用给定的标签和初始状态构造一个单选钮。
+		//设置这个组件的边框。
+		button.addActionListener(event->demoPanel.setBorder(b));
+		group.add(button);  //将按钮添加到组中。
+		buttonPanel.add(button);
+	}
+}
+
+public class TestApplet3{
+	public static void main(String[] args) {
+		EventQueue.invokeLater(()->{
+			JFrame frame=new BorderFrame();
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setTitle("边框");  //设置框架标题
+			frame.setLocation(300,300);
+			frame.setVisible(true);  //使其可见性
+		});
+	}
+}
+```
+
+### 4.4  组合框
+
+1. 如果有多个选择项， 使用单选按钮就不太适宜了， 其 原因是占据的屏幕空间太大。 这时就可以选择组合框。 当 用户点击这个组件时， 选择列表就会下拉出来， 用户可以 从中选择一项。
+
+2. 如果下拉列表框被设置成可编辑 （ editable ), 就可以像编辑文本一样编辑当前的选项内容。鉴于这个原因， 这种组件被称为组合框（ combo box),它将文本域的灵活性与一组预定义的选项组合起来。JComboBox 类提供了组合框的组件。
+
+3. 在 Java SE 7 中，JComboBox 类是一个泛型类。 例如，JComboBox<String> 包含 String类型的对象， JComboBox<Integer> 包含整数。
+
+4. 调用 setEditable 方法可以让组合框可编辑。 注意， 编辑只会影响当前项， 而不会改变列表内容。
+
+5. 可以调用 getSelectedltem 方法获取当前的选项， 如果组合框是可编辑的， 当前选项则是可以编辑的。不过，对于可编辑组合框， 其中的选项可以是任何类型，这取决于编辑器（即由编辑器获取用户输人并将结果转换为一个对象 )。 如果你的组合框不是可编辑的， 最好调用
+
+   **combo.getltemAt(combo.getSelectedlndex())**
+
+   这会为所选选项提供正确的类型。
+
+6. 可以调用 addltem 方法增加选项。这个方法将字符串添加到列表的尾部。可以利用 insertltemAt 方法在列表的任何位置插人一个新选项
+
+   faceCombo.insertltemAt("Monospaced", 0); // add at the beginning
+
+7. 可以增加任何类型的选项，组合框可以调用每个选项的 toString 方法显示其内容。
+
+8. 如果需要在运行时删除某些选项，可以使用 removeltem 或者 removeltemAt 方法，使用哪个方法将取决于参数提供的是想要删除的选项内容， 还是选项位置。
+
+   faceCombo.removeltem("Monospaced");
+   faceCombo.removeltemAt(0): // remove first item
+
+9. 调用 removeAllltems 方法将立即移除所有的选项。
+
+10. 如果需要往组合框中添加大量的选项，addltem 方法的性能就显得很差了 n 取 而 代之的是构造一个 DefaultComboBoxModel, 并调用 addElement 方法进行加载， 然后再调用 JComboBox 中的 setModel 方法。
+
+11. 当用户从组合框中选择一个选项时，组合框就将产生一个动作事件。为了判断哪个选项被选择， 可以通过事件参数调用 getSource 方法来得到发送事件的组合框引用， 接着调用getSelectedltem 方法获取当前选择的选项。需要把这个方法的返回值转化为相应的类型，通常是 String 型。
+
+12. 如果希望持久地显示列表， 而不是下拉列表， 就应该使用 _iList 组件。
+
+    ```java
+    class ComboBoxFrame extends JFrame{
+    	private JLabel label;
+    	private JComboBox<String> faceCombo;
+    	private static final int DEFAULT_SIZE=24;
+    
+    	public ComboBoxFrame(){
+    		label=new JLabel("You will never walk alone!");
+    		label.setFont(new Font("Serif",Font.PLAIN,DEFAULT_SIZE));
+    		add(label,BorderLayout.CENTER);
+    
+    		faceCombo=new JComboBox<>();
+    		//把一个选项添加到选项列表中。
+    		faceCombo.addItem("Serif");
+    		faceCombo.addItem("SansSerif");
+    		faceCombo.addItem("Monospaced");
+    		faceCombo.addItem("Dialog");
+    		faceCombo.addItem("DialogInput");
+    		faceCombo.addItem("宋体");
+    
+    		//返回当前选择的选项。
+    		faceCombo.addActionListener(event->{
+    			label.setFont(new Font(faceCombo.getItemAt(faceCombo.getSelectedIndex()),Font.PLAIN,DEFAULT_SIZE));
+    		});
+    
+    		JPanel comboPanel=new JPanel();
+    		comboPanel.add(faceCombo);
+    		add(comboPanel,BorderLayout.SOUTH);
+    		pack();
+    	}
+    }
+    
+    public class TestApplet3{
+    	public static void main(String[] args) {
+    		EventQueue.invokeLater(()->{
+    			JFrame frame=new ComboBoxFrame();
+    			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    			frame.setTitle("组合框");  //设置框架标题
+    			frame.setLocation(300,300);
+    			frame.setVisible(true);  //使其可见性
+    		});
+    	}
+    }
+    ```
+
+### 4.5  滑动条
+
+1. 组合框可以让用户从一组离散值中进行选择。 滑动条允许进行连续值的选择， 例如， 从 1 ~ 100 之间选择任意数值。
+
+2. 通常， 可以使用下列方式构造滑动条：
+
+   JSlider slider = new ]Slide「(min, max, initialValue) ;
+
+   如果省略最小值、 最大值和初始值， 其默认值分别为 0、100 和 50。
+
+3. 如果需要垂直滑动条， 可以按照下列方式调用构造器：
+
+   ]Slider slider = new ]SIider(SwingConstants.VERTICAL, min, max, initialValue);
+
+4. 当用户滑动滑动条时， 滑动条的值就会在最小值和最大值之间变化。 当值发生变化时， ChangeEvent 就会发送给所有变化的监听器。 为了得到这些改变的通知，需要调用 addChangeListener 方法并且安装一个实现了 ChangeListener 接口的对象。这个接口只有一个方法 StateChanged。在这个方法中，可以获取滑动条的当前值：
+
+   ```java
+   ChangeListener listener = event -> {
+       JSlider slider = (]Slider) event.getSource()；
+       int value - slider.getValueO;
+   }; 
+   
+   slider.setMajorTickSpacing(20);
+   slider.setMinorTickSpacing(5);
+   ```
+
+5. 可以通过显示标尺（tick ) 对滑动条进行修饰。上述滑动条在每 20 个单位的位置显示一个大标尺标记， 每 5 个单位的位置显示一个小标尺标记。所谓单位是指滑动条值， 而不是像素。
+
+6. 这些代码只设置了标尺标记， 要想将它们显示出来， 还需要调用：slider.setPaintTicks(true);
+
+7. 大标尺和小标尺标记是相互独立的。 例如， 可以每 20 个单位设置一个大标尺标记， 同时每 7 个单位设置一个小标尺标记， 但是这样设置， 滑动条看起来会显得非常凌乱。
+
+8. 可以强制滑动条对齐标尺。这样一来， 只要用户完成拖放滑动条的操作， 滑动条就会立即自动地移到最接近的标尺处。 激活这种操作方式需要调用：
+
+   slider.setSnapToTicks(true);
+
+9. 可以调用下列方法为大标尺添加标尺标记标签（tick mark labels)：slider.setPaintLabels(true);
+
+10. 还可以提供其他形式的标尺标记， 如字符串或者图标。首先需要填充一个键为 Integer 类型且值为 Component 类型的散列表。 然后再调用setLabelTable 方法，组件就会放置在标尺标记处。通常组件使用的是几此以对象。
+
+    ```
+    Hashtab1e<Integer, Component〉labelTable = new Hashtab1e<Integer, Components);
+    labelTable.put(0, new ]Label("A"));
+    labelTable.put(20, new 儿abel("B"));
+    labelTable.putdOO, new 儿abel("F”)）；
+    slider,setLabelTable(labelTable):
+    ```
+
+11. 如果标尺的标记或者标签不显示， 请检查一下是否调用了 setPaintTicks(true) 和setPaintLabels(true)。
+
+12. 要想隐藏滑动条移动的轨迹， 可以调用：slider.setPaintTrack(false);
+
+13. 滑动条是逆向的， 调用下列方法可以实现这个效果：slider.setlnverted(true);
+
+    ```java
+    class SliderFrame extends JFrame{
+    	private JPanel slidePanel;
+    	private JTextField textField;
+    	private ChangeListener listener;
+    
+    	public SliderFrame(){
+    		slidePanel=new JPanel();
+    		slidePanel.setLayout(new GridLayout(10,1));
+    
+    		listener=event->{
+    			JSlider source=(JSlider) event.getSource();
+    			textField.setText(""+source.getValue());
+    		};
+    
+    		JSlider slider=new JSlider();
+    		addSlider(slider,"Plain");
+    
+    		//用给定的方向、最大值、 最小值和初始化值构造一个水平滑动条。
+    		slider=new JSlider();
+    		//显示标尺
+    		slider.setPaintTicks(true);
+    		//用给定的滑动条单位的倍数设置大标尺和小标尺。
+    		slider.setMajorTickSpacing(20);
+    		slider.setMinorTickSpacing(5);
+    		addSlider(slider,"Ticks");
+    
+    		slider=new JSlider();
+    		slider.setPaintTicks(true);
+    		//每一次调整后滑块都要对齐到最接近的标尺处
+    		slider.setSnapToTicks(true);
+    		slider.setMajorTickSpacing(20);
+    		slider.setMinorTickSpacing(5);
+    		addSlider(slider,"Snap to ticks");
+    
+    		slider=new JSlider();
+    		slider.setPaintTicks(true);
+    		slider.setMajorTickSpacing(20);
+    		slider.setMinorTickSpacing(5);
+    		//如果 b 是 tme， 显示滑动条滑动的轨迹。
+    		slider.setPaintTrack(false);
+    		addSlider(slider,"No track");
+    
+    		slider=new JSlider();
+    		slider.setPaintTicks(true);
+    		slider.setMajorTickSpacing(20);
+    		slider.setMinorTickSpacing(5);
+    		slider.setInverted(true);
+    		addSlider(slider,"Inverted");
+    
+    		slider=new JSlider();
+    		slider.setPaintTicks(true);
+    		//显示标尺标签。
+    		slider.setPaintLabels(true);
+    		slider.setMajorTickSpacing(20);
+    		slider.setMinorTickSpacing(5);
+    		addSlider(slider,"Labels");
+    
+    		slider=new JSlider();
+    		slider.setPaintTicks(true);
+    		slider.setPaintLabels(true);
+    		slider.setMajorTickSpacing(20);
+    		slider.setMinorTickSpacing(5);
+    		
+    		Dictionary<Integer,Component> labelTable=new Hashtable<>();
+    		labelTable.put(0,new JLabel("A"));
+    		labelTable.put(20,new JLabel("B"));
+    		labelTable.put(40,new JLabel("C"));
+    		labelTable.put(60,new JLabel("D"));
+    		labelTable.put(80,new JLabel("E"));
+    		labelTable.put(100,new JLabel("F"));
+    		//设置用于作为标尺标签的组件。 
+    		slider.setLabelTable(labelTable);
+    		addSlider(slider,"Custom labels");
+    
+    		textField=new JTextField();
+    		add(slidePanel,BorderLayout.CENTER);
+    		add(textField,BorderLayout.SOUTH);
+    		pack();
+    	}
+    	public void addSlider(JSlider s,String description){
+    		s.addChangeListener(listener);
+    		JPanel panel=new JPanel();
+    		panel.add(s);
+    		panel.add(new JLabel(description));
+    		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    		GridBagConstraints gbc = new GridBagConstraints();
+    		gbc.gridy=slidePanel.getComponentCount();
+    		gbc.anchor=GridBagConstraints.WEST;
+    		slidePanel.add(panel,gbc);
+    	}
+    }
+    
+    public class TestApplet3{
+    	public static void main(String[] args) {
+    		EventQueue.invokeLater(()->{
+    			JFrame frame=new SliderFrame();
+    			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    			frame.setTitle("组合框");  //设置框架标题
+    			frame.setLocation(300,300);
+    			frame.setVisible(true);  //使其可见性
+    		});
+    	}
+    }
+    
+    ```
+
+##  5  菜 单
+
